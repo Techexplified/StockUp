@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model Shop {
+  id               String   @id @default(uuid())
+  shopDomain       String   @unique
+  name             String
+  email            String
+  currency         String?
+  country          String?
+  isOnboarded      Boolean  @default(false)
+  isOnboardedData  Boolean  @default(false)
+
+  // Onboarding Preferences
+  role             String?
+  goals            String?
+  priority         String?
+  manageSuppliers  String?
+  leadTime         String?
+  safetyStock      String?
+  threshold        String?
+  planningHorizon  String?
+  recStyle         String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Product {
+  id                String   @id @default(uuid())
+  shopDomain        String
+  productName       String
+  sku               String   @unique
+  variantName       String?
+  category          String?
+  currentStock      Int      @default(0)
+  unitCost          Float    @default(0.0)
+  sellingPrice      Float    @default(0.0)
+  reorderPoint      Int      @default(0)
+  safetyStock       Int      @default(0)
+  status            String   @default("Active") // Active / Inactive
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([shopDomain])
+}
+
+model Supplier {
+  id                String   @id @default(uuid())
+  shopDomain        String
+  supplierName      String
+  supplierCode      String   @unique
+  contactPerson     String?
+  email             String?
+  phone             String?
+  leadTimeDays      Int      @default(7)
+  paymentTerms      String?
+  minimumOrderValue Float    @default(0.0)
+  status            String   @default("Active") // Active / Inactive
+  notes             String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([shopDomain])
+}
+
+model SkuSupplierMap {
+  id                String   @id @default(uuid())
+  shopDomain        String
+  sku               String
+  supplierCode      String
+  supplierSku       String?
+  unitCost          Float    @default(0.0)
+  leadTimeDays      Int      @default(7)
+  moq               Int?     // Minimum Order Quantity
+  packSize          String?
+  isPreferred       Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([shopDomain])
+  @@index([sku])
+  @@index([supplierCode])
+}
+
+model PurchaseOrder {
+  id                   String   @id @default(uuid())
+  shopDomain           String
+  poNumber             String
+  poDate               DateTime @default(now())
+  supplierCode         String
+  sku                  String
+  productName          String
+  orderedQuantity      Int      @default(0)
+  unitCost             Float    @default(0.0)
+  expectedDeliveryDate DateTime?
+  receivedQuantity     Int      @default(0)
+  poStatus             String   @default("Pending") // Open, Pending, Ordered, Received, Cancelled
+  notes                String?
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([shopDomain])
+  @@index([poNumber])
+  @@index([sku])
+}
+
+model HistoricalSale {
+  id               String   @id @default(uuid())
+  shopDomain       String
+  date             DateTime @default(now())
+  orderId          String
+  sku              String
+  productName      String
+  quantitySold     Int      @default(0)
+  unitSellingPrice Float    @default(0.0)
+  discount         Float    @default(0.0)
+  returnQuantity   Int      @default(0)
+  salesChannel     String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([shopDomain])
+  @@index([orderId])
+  @@index([sku])
+}
+
+model AiChatMessage {
+  id         String   @id @default(uuid())
+  shopDomain String
+  role       String   // "user" | "assistant"
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([shopDomain])
+}
