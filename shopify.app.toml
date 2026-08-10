@@ -41,7 +41,7 @@ api_version = "2026-10"
 scopes = "write_products,read_products,read_inventory,write_inventory,read_locations,read_orders,write_orders,write_metaobjects,write_metaobject_definitions"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://stock-up-ruby.vercel.app/auth" ]
 
 [product.metafields.app.demo_info]
 type = "single_line_text_field"
