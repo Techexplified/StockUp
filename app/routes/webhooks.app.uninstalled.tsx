@@ -13,5 +13,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await db.session.deleteMany({ where: { shop } });
   }
 
+  // Update connectedToShopify back to false
+  await db.shop.updateMany({
+    where: { shopDomain: shop },
+    data: { connectedToShopify: false },
+  });
+
   return new Response();
 };

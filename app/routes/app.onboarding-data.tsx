@@ -514,11 +514,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
 
-    // Mark isOnboardedData = true in database
+    // Check current shop connection status from DB to ensure existing true status is preserved
+    const currentShop = await prisma.shop.findUnique({
+      where: { shopDomain: session.shop },
+      select: { connectedToShopify: true },
+    });
+
+    const finalConnectedStatus = isConnected || currentShop?.connectedToShopify || false;
+
+    // Mark isOnboardedData = true & connectedToShopify in database
     await prisma.shop.update({
       where: { shopDomain: session.shop },
       data: {
         isOnboardedData: true,
+        connectedToShopify: finalConnectedStatus,
       },
     });
 
@@ -534,7 +543,7 @@ export default function OnboardingDataImport() {
   const submit = useSubmit();
   const navigation = useNavigation();
 
-  const [storeConnected, setStoreConnected] = useState(false);
+  const [storeConnected, setStoreConnected] = useState<boolean>(shop?.connectedToShopify ?? false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);

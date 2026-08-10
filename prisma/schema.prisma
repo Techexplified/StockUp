@@ -42,6 +42,7 @@ model Shop {
   country          String?
   isOnboarded      Boolean  @default(false)
   isOnboardedData  Boolean  @default(false)
+  connectedToShopify Boolean @default(false)
 
   // Onboarding Preferences
   role             String?

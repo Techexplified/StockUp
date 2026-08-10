@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { useLoaderData, useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
-import { ensureShopData } from "../db.server";
+import { ensureShopData, pushProductUpdateToShopify, pushProductDeleteToShopify } from "../db.server";
 import prisma from "../db.server";
 import {
   ShoppingBag,
@@ -30,11 +30,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
-import { StockPilotAiChatCard } from "app/components/StockPilotAiChatCard";
+import { StockPilotAiChatCard } from "../components/StockPilotAiChatCard";
+import { formatCurrency, getCurrencySymbol } from "../utils/currency";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shop } = await ensureShopData(request, authenticate);
+  const { admin, shop } = await ensureShopData(request, authenticate);
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
 
@@ -67,7 +69,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           },
         });
       } else if (sku) {
-        // Try update by SKU if ID is sample or fallback
         const existing = await prisma.product.findFirst({ where: { sku } });
         if (existing) {
           await prisma.product.update({
@@ -85,7 +86,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           });
         }
       }
-      return { success: true, actionType: "UPDATE", message: "Product updated successfully." };
+
+      // Automatically push product edits to connected Shopify store (only when connectedToShopify = true)
+      if (sku || productName) {
+        await pushProductUpdateToShopify(admin, shop.shopDomain, {
+          sku,
+          productName,
+          variantName,
+          category,
+          sellingPrice,
+          currentStock,
+          unitCost,
+        });
+      }
+
+      return { success: true, actionType: "UPDATE", message: "Product updated in database & Shopify store successfully." };
     } catch (err: any) {
       console.error("Error updating product:", err);
       return { success: false, actionType: "UPDATE", error: err.message || "Failed to update product." };
@@ -97,18 +112,49 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const sku = formData.get("sku") as string;
 
     try {
-      if (id && id.length > 5 && !id.startsWith("fallback")) {
-        await prisma.product.delete({ where: { id } });
-      } else if (sku) {
-        const existing = await prisma.product.findFirst({ where: { sku } });
-        if (existing) {
-          await prisma.product.delete({ where: { id: existing.id } });
-        }
+      let targetSku = sku;
+      if (!targetSku && id && id.length > 5 && !id.startsWith("fallback")) {
+        const prod = await prisma.product.findUnique({ where: { id } });
+        if (prod) targetSku = prod.sku;
       }
-      return { success: true, actionType: "DELETE", message: "Product deleted successfully." };
+
+      // Automatically push product deletion to connected Shopify store (only when connectedToShopify = true)
+      if (targetSku) {
+        await pushProductDeleteToShopify(admin, shop.shopDomain, targetSku);
+      }
+
+      if (id && id.length > 5 && !id.startsWith("fallback")) {
+        await prisma.product.deleteMany({ where: { id } });
+      } else if (targetSku) {
+        await prisma.product.deleteMany({ where: { sku: targetSku } });
+      }
+      return { success: true, actionType: "DELETE", message: "Product deleted from database & Shopify store successfully." };
     } catch (err: any) {
       console.error("Error deleting product:", err);
-      return { success: false, actionType: "DELETE", error: err.message || "Failed to delete product." };
+      return { success: false, error: err.message || "Failed to delete product." };
+    }
+  }
+
+  if (intent === "SYNC_SHOPIFY") {
+    const { admin, session } = await authenticate.admin(request);
+    try {
+      const { syncShopifyDataToDb } = await import("../db.server");
+      const result = await syncShopifyDataToDb(admin, session.shop);
+      if (result.success) {
+        return {
+          success: true,
+          actionType: "SYNC_SHOPIFY",
+          message: `Successfully synced ${result.count || 0} product(s) from Shopify!`,
+        };
+      } else {
+        return {
+          success: false,
+          actionType: "SYNC_SHOPIFY",
+          error: typeof result.error === "string" ? result.error : "Failed to sync Shopify store.",
+        };
+      }
+    } catch (err: any) {
+      return { success: false, actionType: "SYNC_SHOPIFY", error: err.message || "Sync failed." };
     }
   }
 
@@ -386,6 +432,7 @@ function MetricTooltip({
 export default function InventoryPage() {
   const { shop, metrics, inventoryList, dateRangeStr} = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
+  const syncFetcher = useFetcher();
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -394,6 +441,17 @@ export default function InventoryPage() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
+
+  useEffect(() => {
+    if (syncFetcher.data) {
+      const res: any = syncFetcher.data;
+      if (res.success && res.actionType === "SYNC_SHOPIFY") {
+        showToast(res.message || "Shopify store synced!", "success");
+      } else if (res.error && res.actionType === "SYNC_SHOPIFY") {
+        showToast(res.error, "error");
+      }
+    }
+  }, [syncFetcher.data]);
 
   // Local state copy for instant UI updates
   const [localInventory, setLocalInventory] = useState<any[] | null>(null);
@@ -702,7 +760,7 @@ export default function InventoryPage() {
       } else if (qText.toLowerCase().includes("forecast")) {
         reply = "Total forecasted demand across your inventory is estimated at ~3,550 units over the next 14 days.";
       } else if (qText.toLowerCase().includes("health")) {
-        reply = `Inventory Health Summary: Total Inventory Value is ₹${metrics.inventoryValue.toLocaleString("en-IN")} across ${metrics.totalSKUs.toLocaleString()} active SKUs.`;
+        reply = `Inventory Health Summary: Total Inventory Value is ${formatCurrency(metrics.inventoryValue, shop?.currency)} across ${metrics.totalSKUs.toLocaleString()} active SKUs.`;
       }
       setChatMessages([...newMsgs, { sender: "ai" as const, text: reply }]);
       setIsAsking(false);
@@ -806,7 +864,7 @@ export default function InventoryPage() {
             </div>
             <div className="mt-3">
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                ₹{metrics.inventoryValue.toLocaleString("en-IN")}
+                {formatCurrency(metrics.inventoryValue, shop?.currency)}
               </h2>
               <p className="text-xs text-slate-400 mt-1">Total value</p>
             </div>
@@ -973,18 +1031,26 @@ export default function InventoryPage() {
             )}
           </div>
 
-          {/* Right: Export & Settings */}
+          {/* Right: Export & Sync */}
           <div className="flex items-center gap-2 self-end md:self-auto">
             <button
               onClick={handleExportCSV}
-              className="bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-2"
+              className="bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-xl text-xs font-semibold shadow-2xs transition-all flex items-center gap-2 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>
             </button>
-            {/* <button className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 p-2 rounded-xl transition-all">
-              <Settings className="w-4 h-4" />
-            </button> */}
+            <syncFetcher.Form method="post">
+              <input type="hidden" name="intent" value="SYNC_SHOPIFY" />
+              <button
+                type="submit"
+                disabled={syncFetcher.state !== "idle"}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-2xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncFetcher.state !== "idle" ? "animate-spin" : ""}`} />
+                <span>{syncFetcher.state !== "idle" ? "Syncing Store..." : "Sync with Shopify"}</span>
+              </button>
+            </syncFetcher.Form>
           </div>
         </div>
 
@@ -1092,7 +1158,7 @@ export default function InventoryPage() {
 
                           {/* Inventory Value */}
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                            ₹{item.inventoryValue.toLocaleString("en-IN")}
+                            {formatCurrency(item.inventoryValue, shop?.currency)}
                           </td>
 
                           {/* Stock Coverage */}
@@ -1377,7 +1443,7 @@ export default function InventoryPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Unit Cost (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Unit Cost ({getCurrencySymbol(shop?.currency)})</label>
                   <input
                     type="number"
                     min="0"
@@ -1389,7 +1455,7 @@ export default function InventoryPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Selling Price (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Selling Price ({getCurrencySymbol(shop?.currency)})</label>
                   <input
                     type="number"
                     min="0"

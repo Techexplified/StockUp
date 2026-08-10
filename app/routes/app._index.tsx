@@ -23,6 +23,7 @@ import {
   Filter,
 } from "lucide-react";
 import { StockPilotAiChatCard } from "../components/StockPilotAiChatCard";
+import { formatCurrency } from "../utils/currency";
 // ============================================================================
 // 1. DATA FETCHING & BUSINESS LOGIC (SERVER SIDE)
 // ============================================================================
@@ -449,10 +450,10 @@ export default function Dashboard() {
 
     setTimeout(() => {
       const q = text.toLowerCase();
-      let reply = `Based on your live DB records, Total Inventory Value is ₹${metrics.totalInventoryValue.toLocaleString("en-IN")}.`;
+      let reply = `Based on your live DB records, Total Inventory Value is ${formatCurrency(metrics.totalInventoryValue, shop?.currency)}.`;
 
       if (q.includes("risk") || q.includes("stockout") || q.includes("stock out")) {
-        reply = `⚠️ ${metrics.atRisk7DaysCount} item(s) are currently at risk of stocking out within 7 days. Total estimated risk value: ₹${metrics.totalStockoutRiskVal.toLocaleString("en-IN")}.`;
+        reply = `⚠️ ${metrics.atRisk7DaysCount} item(s) are currently at risk of stocking out within 7 days. Total estimated risk value: ${formatCurrency(metrics.totalStockoutRiskVal, shop?.currency)}.`;
       } else if (q.includes("reorder") || q.includes("order") || q.includes("buy")) {
         reply = `🛒 You currently have ${metrics.lowStockCount + metrics.outOfStockCount} items requiring restocking. Check out the Reorder Recommendations portal to draft purchase orders!`;
       } else if (q.includes("slow") || q.includes("dead")) {
@@ -629,7 +630,7 @@ export default function Dashboard() {
           </div>
           <div className="mt-4">
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              ₹{metrics.totalInventoryValue > 0 ? metrics.totalInventoryValue.toLocaleString("en-IN") : "0"}
+              {formatCurrency(metrics.totalInventoryValue, shop?.currency)}
             </h2>
             {metrics.inventoryTrendPct !== null ? (
               <p
@@ -1011,7 +1012,7 @@ export default function Dashboard() {
                           {prod.unitsSold30.toLocaleString("en-IN")}
                         </td>
                         <td className="py-3.5 px-3 text-right font-semibold text-slate-900">
-                          ₹{prod.revenue30.toLocaleString("en-IN")}
+                          {formatCurrency(prod.revenue30, shop?.currency)}
                         </td>
                         <td className="py-3.5 px-3 text-center">
                           <span
@@ -1157,9 +1158,7 @@ export default function Dashboard() {
             <div className="bg-slate-50/70 border border-slate-100 rounded-xl p-3.5 text-center">
               <p className="text-[11px] font-medium text-slate-500">Estimated Stockout Value</p>
               <p className="text-lg font-bold text-slate-900 mt-0.5">
-                {metrics.totalStockoutRiskVal > 0
-                  ? `₹${metrics.totalStockoutRiskVal.toLocaleString("en-IN")}`
-                  : "₹0"}
+                {formatCurrency(metrics.totalStockoutRiskVal, shop?.currency)}
               </p>
               <p
                 className={`text-[10px] font-semibold mt-0.5 ${metrics.totalStockoutRiskVal === 0 ? "text-emerald-600" : "text-rose-500"

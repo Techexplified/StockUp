@@ -6,6 +6,7 @@ import { ensureShopData } from "../db.server";
 import prisma from "../db.server";
 import { InventoryHealthChart } from "../components/InventoryHealthChart";
 import { StockPilotAiChatCard } from "../components/StockPilotAiChatCard";
+import { formatCurrency, getCurrencySymbol } from "../utils/currency";
 import { AiReportModal } from "../components/AiReportModal";
 import {
   BarChart3,
@@ -444,9 +445,7 @@ export default function InsightsPage() {
   const maxVal = Math.max(...activeTrend.map((t: { val: number }) => t.val), 1);
 
   const formatCurrencyLabel = (val: number) => {
-    if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
-    if (val >= 1000) return `₹${(val / 1000).toFixed(0)}K`;
-    return `₹${val}`;
+    return formatCurrency(val, shop?.currency);
   };
 
   const yMaxLabel = formatCurrencyLabel(maxVal);
@@ -472,10 +471,10 @@ export default function InsightsPage() {
     setIsAsking(true);
 
     setTimeout(() => {
-      let reply = `Based on current DB velocity, ${metrics.atRiskCount} products are at risk of stockout within 7 days. Total inventory value is ₹${metrics.totalInventoryValue.toLocaleString("en-IN")}.`;
+      let reply = `Based on current DB velocity, ${metrics.atRiskCount} products are at risk of stockout within 7 days. Total inventory value is ${formatCurrency(metrics.totalInventoryValue, shop?.currency)}.`;
       const lower = textToSend.toLowerCase();
       if (lower.includes("risk")) {
-        reply = `${metrics.atRiskCount} items are currently at risk of stocking out within 7 days, representing ₹${metrics.stockoutValue.toLocaleString("en-IN")} in potential lost revenue.`;
+        reply = `${metrics.atRiskCount} items are currently at risk of stocking out within 7 days, representing ${formatCurrency(metrics.stockoutValue, shop?.currency)} in potential lost revenue.`;
       } else if (lower.includes("reorder")) {
         reply = `We recommend reordering ${metrics.atRiskCount} SKUs today to prevent stockouts across your top categories.`;
       } else if (lower.includes("slow")) {
@@ -524,7 +523,7 @@ export default function InsightsPage() {
   })}, 08:30 AM`;
 
   const handleDownloadReport = (reportName: string) => {
-    let csvHeader = "SKU,Product Name,Category,Current Stock,Unit Cost (₹),Selling Price (₹),Inventory Value (₹),Status,Supplier\n";
+    let csvHeader = `SKU,Product Name,Category,Current Stock,Unit Cost (${getCurrencySymbol(shop?.currency)}),Selling Price (${getCurrencySymbol(shop?.currency)}),Inventory Value (${getCurrencySymbol(shop?.currency)}),Status,Supplier\n`;
     let csvRows = "";
     let recordCount = 0;
 
@@ -539,7 +538,7 @@ export default function InsightsPage() {
       } else if (reportName.includes("Valuation")) {
         filtered = filtered.sort((a, b) => b.itemVal - a.itemVal);
       } else if (reportName.includes("Supplier")) {
-        csvHeader = "Supplier Name,Total SKUs Supplied,Total Inventory Value (₹),Lead Time (Days)\n";
+        csvHeader = `Supplier Name,Total SKUs Supplied,Total Inventory Value (${getCurrencySymbol(shop?.currency)}),Lead Time (Days)\n`;
         const suppMapObj: Record<string, { skus: number; val: number; leadTime: number }> = {};
         filtered.forEach((p) => {
           const supp = p.supplierName || "Default Supplier";
@@ -667,7 +666,7 @@ export default function InsightsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 font-bold text-base">
-                  ₹
+                  {getCurrencySymbol(shop?.currency)}
                 </div>
                 <span className="text-xs font-semibold text-slate-600">Total Inventory Value</span>
               </div>
@@ -680,7 +679,7 @@ export default function InsightsPage() {
             </div>
             <div className="mt-3">
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                ₹{metrics.totalInventoryValue.toLocaleString("en-IN")}
+                {formatCurrency(metrics.totalInventoryValue, shop?.currency)}
               </h2>
             </div>
           </div>
@@ -726,7 +725,7 @@ export default function InsightsPage() {
             </div>
             <div className="mt-3">
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                ₹{metrics.stockoutValue.toLocaleString("en-IN")}
+                {formatCurrency(metrics.stockoutValue, shop?.currency)}
               </h2>
             </div>
           </div>
@@ -775,9 +774,8 @@ export default function InsightsPage() {
             </div>
             <div className="mt-3">
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                ₹{metrics.overstockValue.toLocaleString("en-IN")}
+                {formatCurrency(metrics.overstockValue, shop?.currency)}
               </h2>
-            
             </div>
           </div>
         </div>
@@ -1082,7 +1080,7 @@ export default function InsightsPage() {
                     </div>
                     <div>
                       <div className="text-xs font-extrabold text-slate-900 group-hover:text-purple-700 transition-colors">
-                        Overstock of ₹{metrics.overstockValue.toLocaleString("en-IN")}
+                        Overstock of {formatCurrency(metrics.overstockValue, shop?.currency)}
                       </div>
                       <div className="text-[11px] font-medium text-slate-500 mt-0.5">
                         {metrics.overstockCount} items are overstocked and tying up capital.
@@ -1099,7 +1097,7 @@ export default function InsightsPage() {
                     </div>
                     <div>
                       <div className="text-xs font-extrabold text-slate-900 group-hover:text-purple-700 transition-colors">
-                        Total Inventory Valuation: ₹{metrics.totalInventoryValue.toLocaleString("en-IN")}
+                        Total Inventory Valuation: {formatCurrency(metrics.totalInventoryValue, shop?.currency)}
                       </div>
                       <div className="text-[11px] font-medium text-slate-500 mt-0.5">
                         Calculated across {metrics.totalSkus} active catalog SKUs.

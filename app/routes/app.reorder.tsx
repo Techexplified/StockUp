@@ -36,7 +36,8 @@ import {
   Mail,
   Check,
 } from "lucide-react";
-import { StockPilotAiChatCard } from "app/components/StockPilotAiChatCard";
+import { StockPilotAiChatCard } from "../components/StockPilotAiChatCard";
+import { formatCurrency, getCurrencySymbol } from "../utils/currency";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop } = await ensureShopData(request, authenticate);
@@ -665,7 +666,7 @@ export default function ReorderPage() {
             </div>
             <div>
               <div class="label">Estimated Total Cost</div>
-              <div class="value">₹${successModalData.totalCost.toLocaleString("en-IN")}</div>
+              <div class="value">${formatCurrency(successModalData.totalCost, shop?.currency)}</div>
               <div style="font-size: 10px; color: #94a3b8;">Excluding taxes</div>
             </div>
           </div>
@@ -698,7 +699,7 @@ export default function ReorderPage() {
   const handleEmailSupplier = () => {
     const subject = encodeURIComponent(`Purchase Order: ${successModalData.poNumber}`);
     const body = encodeURIComponent(
-      `Hello ${successModalData.supplierName},\n\nPlease find Purchase Order ${successModalData.poNumber} for ${successModalData.totalUnits} units (Estimated Cost: ₹${successModalData.totalCost.toLocaleString("en-IN")}).\nExpected Delivery Date: ${successModalData.expectedDeliveryDate}.\n\nThank you!`
+      `Hello ${successModalData.supplierName},\n\nPlease find Purchase Order ${successModalData.poNumber} for ${successModalData.totalUnits} units (Estimated Cost: ${formatCurrency(successModalData.totalCost, shop?.currency)}).\nExpected Delivery Date: ${successModalData.expectedDeliveryDate}.\n\nThank you!`
     );
     window.location.href = `mailto:supplier@example.com?subject=${subject}&body=${body}`;
     setToastMessage(`Opened email client for ${successModalData.supplierName}`);
@@ -746,22 +747,7 @@ export default function ReorderPage() {
     } else {
       // Filter out any items that have already been ordered or saved
       const unOrderedCart = cartItems.filter((i) => !savedSkus.includes(i.sku));
-      if (unOrderedCart.length > 0) {
-        setCartItems(unOrderedCart);
-      } else {
-        const pendingReorderItems = recommendationsList
-          .filter((r: any) => isNotOrdered(r) && (r.recommendedQtyNum > 0 || r.status === "At risk" || r.status === "Low stock"))
-          .map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            sku: r.sku,
-            qty: r.recommendedQtyNum || 50,
-            unitCost: r.unitCost || (r.estOrderValue && r.recommendedQtyNum ? Math.round(r.estOrderValue / r.recommendedQtyNum) : 150),
-            supplierName: r.supplierName,
-            icon: "📦",
-          }));
-        setCartItems(pendingReorderItems);
-      }
+      setCartItems(unOrderedCart);
     }
     setIsCartModalOpen(true);
   };
@@ -910,7 +896,7 @@ export default function ReorderPage() {
     ? totalCartCost
     : selectedRows.length > 0
     ? checkedOrderValue
-    : defaultReviewAmount;
+    : 0;
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -936,7 +922,7 @@ export default function ReorderPage() {
     setTimeout(() => {
       let reply = "Based on sales velocity, iPhone 15 Pro Case & 20W USB-C Charger are at risk of stockout within 5 days. We recommend creating a Purchase Order for MobileMart & ElectroHub today.";
       if (qText.toLowerCase().includes("reorder")) {
-        reply = `You have ${metrics.itemsToReorder} items recommended for reorder with a total estimated order value of ₹${metrics.estOrderValue.toLocaleString("en-IN")}.`;
+        reply = `You have ${metrics.itemsToReorder} items recommended for reorder with a total estimated order value of ${formatCurrency(metrics.estOrderValue, shop?.currency)}.`;
       } else if (qText.toLowerCase().includes("risk")) {
         reply = `${metrics.atRiskCount} products are at risk of stockout within the next 7 days. Reordering today will prevent revenue loss.`;
       } else if (qText.toLowerCase().includes("forecast")) {
@@ -1055,7 +1041,7 @@ export default function ReorderPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-bold text-base">
-                  ₹
+                  {getCurrencySymbol(shop?.currency)}
                 </div>
                 <span className="text-xs font-semibold text-slate-600">Est. order value</span>
               </div>
@@ -1068,7 +1054,7 @@ export default function ReorderPage() {
             </div>
             <div className="mt-3">
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                ₹{metrics.estOrderValue.toLocaleString("en-IN")}
+                {formatCurrency(metrics.estOrderValue, shop?.currency)}
               </h2>
               <p className="text-xs text-slate-400 mt-1">Excluding taxes</p>
             </div>
@@ -1174,14 +1160,14 @@ export default function ReorderPage() {
 
           <div className="flex items-center gap-3 self-end sm:self-auto mb-2">
             <div className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-medium shadow-2xs">
-              Review Amount <span className="font-bold text-slate-900 ml-1">₹{displayReviewAmount.toLocaleString("en-IN")}</span>
+              Review Amount <span className="font-bold text-slate-900 ml-1">{formatCurrency(displayReviewAmount, shop?.currency)}</span>
             </div>
             <button
               onClick={handleOpenCartModal}
               className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>Review Order ({selectedRows.length || totalCartItemsCount})</span>
+              <span>Review Order ({cartItems.length || selectedRows.length || 0})</span>
             </button>
           </div>
         </div>
@@ -1278,7 +1264,7 @@ export default function ReorderPage() {
 
                           {/* Est. Order Value */}
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                            ₹{item.estOrderValue.toLocaleString("en-IN")}
+                            {formatCurrency(item.estOrderValue, shop?.currency)}
                           </td>
 
                           {/* Action Button */}
@@ -1658,12 +1644,12 @@ export default function ReorderPage() {
 
                               {/* Unit Cost */}
                               <td className="py-3.5 px-4 text-right font-medium text-slate-600">
-                                ₹{item.unitCost}
+                                {formatCurrency(item.unitCost, shop?.currency)}
                               </td>
 
                               {/* Total */}
                               <td className="py-3.5 px-4 text-right font-extrabold text-slate-900">
-                                ₹{(item.qty * item.unitCost).toLocaleString("en-IN")}
+                                {formatCurrency(item.qty * item.unitCost, shop?.currency)}
                               </td>
 
                               {/* Delete button */}
@@ -1725,7 +1711,7 @@ export default function ReorderPage() {
                         <span className="text-[10px] text-slate-400">Excluding taxes</span>
                       </div>
                       <span className="text-xl font-black text-slate-900 tracking-tight">
-                        ₹{totalCartCost.toLocaleString("en-IN")}
+                        {formatCurrency(totalCartCost, shop?.currency)}
                       </span>
                     </div>
                   </div>
@@ -1937,12 +1923,12 @@ export default function ReorderPage() {
                 {/* Estimated Total Cost */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-rose-100/80 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200/60 font-bold text-lg">
-                    ₹
+                    {getCurrencySymbol(shop?.currency)}
                   </div>
                   <div>
                     <div className="text-[11px] font-semibold text-slate-500">Estimated Total Cost</div>
                     <div className="text-xs md:text-sm font-extrabold text-slate-900">
-                      ₹{successModalData.totalCost.toLocaleString("en-IN")}
+                      {formatCurrency(successModalData.totalCost, shop?.currency)}
                     </div>
                     <span className="text-[10px] text-slate-400 block -mt-0.5">Excluding taxes</span>
                   </div>
