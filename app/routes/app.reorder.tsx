@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
@@ -488,6 +488,7 @@ export default function ReorderPage() {
 
   // Success Modal state
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const handledPoDataRef = useRef<any>(null);
   const [successModalData, setSuccessModalData] = useState<any>({
     poNumber: "PO-2026-0724-001",
     supplierName: "MobileMart",
@@ -501,7 +502,9 @@ export default function ReorderPage() {
     if (poFetcher.state === "idle") {
       setSubmittingItemId(null);
     }
-    if (poFetcher.data?.success) {
+    if (poFetcher.data?.success && poFetcher.data !== handledPoDataRef.current) {
+      handledPoDataRef.current = poFetcher.data;
+
       const createdPoNum =
         poFetcher.data.poNumber ||
         poFetcher.data.po?.poNumber ||
@@ -1819,8 +1822,14 @@ export default function ReorderPage() {
 
       {/* SUCCESS PURCHASE ORDER CREATED MODAL (MATCHING EXACT USER SCREENSHOT) */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-8 relative overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-8 relative overflow-hidden animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* CLOSE BUTTON */}
             <button
               type="button"

@@ -430,6 +430,7 @@ export async function runInventoryAgent({
   const llm = new ChatOpenAI({
     model: "openai/gpt-4o-mini",
     temperature: 0.3,
+    maxTokens: 1000,
     apiKey: process.env.OPENROUTER_API_KEY!,
     configuration: {
       baseURL: "https://openrouter.ai/api/v1",
