@@ -1040,7 +1040,7 @@ export default function InventoryPage() {
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>
             </button>
-            <syncFetcher.Form method="post">
+            {/* <syncFetcher.Form method="post">
               <input type="hidden" name="intent" value="SYNC_SHOPIFY" />
               <button
                 type="submit"
@@ -1050,7 +1050,7 @@ export default function InventoryPage() {
                 <RefreshCw className={`w-3.5 h-3.5 ${syncFetcher.state !== "idle" ? "animate-spin" : ""}`} />
                 <span>{syncFetcher.state !== "idle" ? "Syncing Store..." : "Sync with Shopify"}</span>
               </button>
-            </syncFetcher.Form>
+            </syncFetcher.Form> */}
           </div>
         </div>
 
