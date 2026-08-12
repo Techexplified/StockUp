@@ -936,7 +936,7 @@ const normalizeHeaderName = (headerName: string): string => {
                 Import your data to get started
               </h1>
               <p className="text-sm text-slate-500">
-                Bring your data into StockPilot to unlock insights and better inventory control.
+                Bring your data into StockLyn to unlock insights and better inventory control.
               </p>
             </div>
           </div>

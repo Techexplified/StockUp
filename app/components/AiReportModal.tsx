@@ -65,7 +65,7 @@ export function AiReportModal({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${reportName} - StockUp AI</title>
+          <title>${reportName} - StockLyn AI</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
             body {
@@ -176,7 +176,7 @@ export function AiReportModal({
               <h1 class="title">${reportName}</h1>
               <div class="subtitle">${reportDescription}</div>
             </div>
-            <div class="badge">StockUp AI Report</div>
+            <div class="badge">StockLyn AI Report</div>
           </div>
           <div class="meta-bar">
             <span>Generated on: <strong>${reportData?.generatedAt || new Date().toLocaleString()}</strong></span>
@@ -292,7 +292,7 @@ export function AiReportModal({
                   Analyzing Real-Time Inventory & Sales Data...
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                  StockUp AI is querying database SKUs, calculating velocity, and compiling strategic recommendations.
+                  StockLyn AI is querying database SKUs, calculating velocity, and compiling strategic recommendations.
                 </p>
               </div>
             </div>

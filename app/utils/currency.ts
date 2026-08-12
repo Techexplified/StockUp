@@ -1,5 +1,5 @@
 /**
- * Currency Formatter Utility for StockUp
+ * Currency Formatter Utility for StockLyn
  * Automatically formats money amounts with appropriate currency symbol / prefix based on shop currency.
  */
 

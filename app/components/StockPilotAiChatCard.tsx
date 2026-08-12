@@ -119,7 +119,7 @@ function FormattedChatMessage({ text, isUser }: { text: string; isUser: boolean 
 }
 
 export function StockPilotAiChatCard({
-  title = "StockUp AI",
+  title = "StockLyn AI",
   subtitle = "Ask anything about your inventory — powered by real-time data.",
   onClose,
   className,

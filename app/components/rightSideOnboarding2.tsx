@@ -116,7 +116,7 @@ export default function StockUpPreferencesPreview() {
 
           <div>
             <h1 className="text-[34px] font-bold tracking-[-0.02em] text-slate-900">
-              How your preferences shape StockUp
+              How your preferences shape StockLyn
             </h1>
             <p className="mt-2 max-w-[620px] text-[15px] leading-6 text-slate-600">
               We’ll use these settings with your Shopify data to forecast demand
@@ -152,7 +152,7 @@ export default function StockUpPreferencesPreview() {
 
               <div>
                 <h3 className="text-[16px] font-semibold text-violet-700">
-                  StockUp AI
+                  StockLyn AI
                 </h3>
                 <p className="mt-1 max-w-[560px] text-[13px] leading-5 text-slate-600">
                   Your AI assistant will use these preferences to prioritise

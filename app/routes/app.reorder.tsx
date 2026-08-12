@@ -538,6 +538,13 @@ export default function ReorderPage() {
         totalUnits: totalCartUnitsCount || 100,
         expectedDeliveryDate: formattedDeliveryDate,
         totalCost: totalCartCost || 46280,
+        items: cartItems.map((item) => ({
+          sku: item.sku,
+          productName: item.productName,
+          variantTitle: item.variantTitle,
+          qty: item.qty,
+          unitCost: item.unitCost,
+        })),
       });
 
       setIsCartModalOpen(false);
@@ -637,8 +644,8 @@ export default function ReorderPage() {
         <body>
           <div class="header">
             <div>
-              <div class="logo">StockPilot V1</div>
-              <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Smart Inventory Management</div>
+              <div class="logo">StockLyn</div>
+              <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Smart Inventory & Supply Chain Management</div>
             </div>
             <div>
               <div class="title">PURCHASE ORDER</div>
@@ -674,13 +681,49 @@ export default function ReorderPage() {
             </div>
           </div>
 
+          ${
+            successModalData.items && successModalData.items.length > 0
+              ? `
+              <div style="margin-top: 24px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Order Items Breakdown</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px;">
+                  <thead>
+                    <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left;">
+                      <th style="padding: 10px; color: #64748b; font-weight: 700;">SKU</th>
+                      <th style="padding: 10px; color: #64748b; font-weight: 700;">Product Name</th>
+                      <th style="padding: 10px; color: #64748b; font-weight: 700; text-align: right;">Quantity</th>
+                      <th style="padding: 10px; color: #64748b; font-weight: 700; text-align: right;">Unit Cost</th>
+                      <th style="padding: 10px; color: #64748b; font-weight: 700; text-align: right;">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${successModalData.items
+                      .map(
+                        (item: any) => `
+                      <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 10px; font-weight: 600; color: #0f172a;">${item.sku || "-"}</td>
+                        <td style="padding: 10px; color: #334155;">${item.productName || "Product"}${item.variantTitle ? ` <span style="color: #64748b;">(${item.variantTitle})</span>` : ""}</td>
+                        <td style="padding: 10px; text-align: right; font-weight: 600; color: #0f172a;">${item.qty || 0}</td>
+                        <td style="padding: 10px; text-align: right; color: #334155;">${formatCurrency(item.unitCost, shop?.currency)}</td>
+                        <td style="padding: 10px; text-align: right; font-weight: 700; color: #0f172a;">${formatCurrency((item.qty || 0) * (item.unitCost || 0), shop?.currency)}</td>
+                      </tr>
+                    `
+                      )
+                      .join("")}
+                  </tbody>
+                </table>
+              </div>
+            `
+              : ""
+          }
+
           <div style="margin-top: 20px; font-size: 13px; color: #334155; line-height: 1.6; background-color: #f1f5f9; padding: 16px; border-radius: 8px;">
             <strong>Note to Supplier:</strong><br />
             Please confirm receipt of Purchase Order <strong>${successModalData.poNumber}</strong> and confirm the expected dispatch & delivery schedule.
           </div>
 
           <div class="footer">
-            Generated on ${new Date().toLocaleDateString("en-IN")} by StockPilot V1 System
+            Generated on ${new Date().toLocaleDateString("en-IN")} by StockLyn System
           </div>
 
           <script>

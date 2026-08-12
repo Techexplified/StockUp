@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "665da0b1da2d7fab643b41669f0125e5"
-name = "StockUp"
+name = "StockLyn"
 application_url = "https://stock-up-ruby.vercel.app"
 embedded = true
 

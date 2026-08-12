@@ -142,7 +142,7 @@ export default function OnboardingRoute() {
 
                   <div>
                     <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#101828] mb-1.5">
-                      {currentStep === 1 && "Let's personalise StockPilot for you"}
+                      {currentStep === 1 && "Let's personalise StockLyn for you"}
                     </h1>
                     <p className="text-[#475467] text-sm md:text-base leading-relaxed">
                       {currentStep === 1 && "Tell us how you manage inventory so we can tailor your experience and AI recommendations."}
@@ -242,7 +242,7 @@ export default function OnboardingRoute() {
                 {/* 2. GOALS (MULTI-SELECT) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-[#101828]">
-                    2. What do you primarily want StockPilot to help with? <span className="font-normal text-[#667085]">(Select all that apply)</span>
+                    2. What do you primarily want StockLyn to help with? <span className="font-normal text-[#667085]">(Select all that apply)</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                     {[
@@ -291,7 +291,7 @@ export default function OnboardingRoute() {
                 {/* 3. PRIORITISATION (RADIO CARDS) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-[#101828]">
-                    3. What should StockPilot prioritise?
+                    3. What should StockLyn prioritise?
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
@@ -455,7 +455,7 @@ export default function OnboardingRoute() {
                     Set up your inventory preferences
                   </h1>
                   <p className="text-[#475467] text-base">
-                    Help StockPilot understand how you manage stock so we can make more accurate recommendations.
+                    Help StockLyn understand how you manage stock so we can make more accurate recommendations.
                   </p>
                 </header>
 
@@ -536,7 +536,7 @@ export default function OnboardingRoute() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-[#101828]">4. Reorder planning horizon</h3>
-                      <p className="text-xs text-[#475467]">How far ahead you want StockPilot to plan your reorders.</p>
+                      <p className="text-xs text-[#475467]">How far ahead you want StockLyn to plan your reorders.</p>
                     </div>
                   </div>
                   <select
@@ -556,7 +556,7 @@ export default function OnboardingRoute() {
                   <label className="block text-sm font-semibold text-[#101828]">
                     5. Reorder recommendation style
                   </label>
-                  <p className="text-xs text-[#667085]">How conservative should StockPilot be with recommendations?</p>
+                  <p className="text-xs text-[#667085]">How conservative should StockLyn be with recommendations?</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     {[
                       {

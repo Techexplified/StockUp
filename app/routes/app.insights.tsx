@@ -383,7 +383,7 @@ export default function InsightsPage() {
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
     {
       sender: "ai",
-      text: "Hello! I am StockUp AI. Ask me anything about your inventory health, stockout risks, or performance metrics.",
+      text: "Hello! I am StockLyn AI. Ask me anything about your inventory health, stockout risks, or performance metrics.",
     },
   ]);
   const [isAsking, setIsAsking] = useState(false);

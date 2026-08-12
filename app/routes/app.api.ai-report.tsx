@@ -99,13 +99,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
 
     // Construct tailored LLM Prompt
-    const systemPrompt = `You are StockUp AI, an elite e-commerce supply chain analyst built exclusively for StockUp. 
+    const systemPrompt = `You are StockLyn AI, an elite e-commerce supply chain analyst built exclusively for StockLyn. 
 
 === STRICT DOMAIN BOUNDARY RULES ===
 1. YOU MUST ONLY GENERATE INVENTORY, SALES, REORDER, AND SUPPLY CHAIN REPORTS FOR THIS STORE.
 2. STRICTLY REFUSE TO GENERATE CODE, WRITE SCRIPTS, OR ANSWER TOPICS OUTSIDE E-COMMERCE WAREHOUSE MANAGEMENT.
-3. IF THE REQUEST IS UNRELATED TO STOCKUP INVENTORY, POLITELY REFUSE WITH:
-   "StockUp AI is restricted exclusively to generating inventory, sales, and supply chain reports for StockUp."
+3. IF THE REQUEST IS UNRELATED TO STOCKLYN INVENTORY, POLITELY REFUSE WITH:
+   "StockLyn AI is restricted exclusively to generating inventory, sales, and supply chain reports for StockLyn."
 
 Generate a clear, professional, comprehensive markdown report for a Shopify merchant based strictly on the provided real-time warehouse data. Use rich, beautiful markdown formatting with headers (##), bold key metrics, bullet points, callout blocks, and data tables. Do not include markdown code ticks (\`\`\`markdown) around the entire response. Start directly with the title.`;
 
@@ -143,8 +143,8 @@ Make the tone professional, crisp, and executive-ready.`;
       configuration: {
         baseURL: "https://openrouter.ai/api/v1",
         defaultHeaders: {
-          "HTTP-Referer": "https://stockup.app",
-          "X-Title": "StockUp Reports",
+          "HTTP-Referer": "https://stocklyn.app",
+          "X-Title": "StockLyn Reports",
         },
       },
     });

@@ -157,11 +157,11 @@ export default function StockUpAI() {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
             <SparkleIcon />
             <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 700, color: "#1e1148", letterSpacing: "-0.3px" }}>
-              Meet your personalised StockUp AI
+              Meet your personalised StockLyn AI
             </h1>
           </div>
           <p style={{ margin: 0, fontSize: "14px", color: "#6b7280", lineHeight: 1.55 }}>
-            Your preferences help StockUp prioritise the recommendations, risks and insights that matter to your business.
+            Your preferences help StockLyn prioritise the recommendations, risks and insights that matter to your business.
           </p>
         </div>
 
@@ -176,7 +176,7 @@ export default function StockUpAI() {
 
           {/* Card header */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-            <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e1148" }}>Your StockUp AI</span>
+            <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e1148" }}>Your StockLyn AI</span>
             <span style={{
               fontSize: "12px", fontWeight: 500,
               color: "#7c3aed", background: "#f3f0ff",
@@ -260,7 +260,7 @@ export default function StockUpAI() {
               </div>
               <div>
                 <div style={{ fontSize: "12px", fontWeight: 700, color: "#7c3aed", marginBottom: "3px" }}>
-                  StockUp AI
+                  StockLyn AI
                 </div>
                 <div style={{ fontSize: "13px", color: "#374151", lineHeight: 1.5 }}>
                   3 products are at immediate stockout risk. I've prioritised them based on your{" "}
