@@ -280,6 +280,9 @@ export async function syncShopifyDataToDb(admin: any, shopDomain: string, forceC
 
     // 2. Fetch Historical Orders & Sales from Shopify with Cursor Pagination (Non-fatal if read_orders scope is ungranted)
     try {
+      // Clear old historical sales for this shop to avoid duplication during full sync
+      await prisma.historicalSale.deleteMany({ where: { shopDomain } });
+
       let ordersHasNext = true;
       let ordersEndCursor: string | null = null;
 
@@ -288,7 +291,7 @@ export async function syncShopifyDataToDb(admin: any, shopDomain: string, forceC
           `
           #graphql
           query getOrdersForSync($cursor: String) {
-            orders(first: 50, after: $cursor) {
+            orders(first: 50, after: $cursor, query: "status:any") {
               pageInfo {
                 hasNextPage
                 endCursor
@@ -302,6 +305,11 @@ export async function syncShopifyDataToDb(admin: any, shopDomain: string, forceC
                     title
                     sku
                     quantity
+                    variant {
+                      id
+                      sku
+                      title
+                    }
                     originalUnitPriceSet {
                       shopMoney {
                         amount
@@ -329,10 +337,31 @@ export async function syncShopifyDataToDb(admin: any, shopDomain: string, forceC
         ordersHasNext = ordersData?.pageInfo?.hasNextPage || false;
         ordersEndCursor = ordersData?.pageInfo?.endCursor || null;
 
+        console.log(`[SYNC DEBUG] Fetched ${ordersList.length} orders from Shopify for ${shopDomain}`);
+
         for (const order of ordersList) {
           for (const item of order.lineItems?.nodes || []) {
-            const itemSku = item.sku ? item.sku.trim() : "";
-            if (!itemSku) continue;
+            let itemSku = item.sku ? item.sku.trim() : (item.variant?.sku ? item.variant.sku.trim() : "");
+            
+            if (!itemSku && item.variant?.id) {
+              const variantIdNum = item.variant.id.split("/").pop();
+              itemSku = `SKU-${variantIdNum}`;
+            }
+
+            if (!itemSku && item.title) {
+              const matchedProd = await prisma.product.findFirst({
+                where: { shopDomain, productName: item.title },
+              });
+              if (matchedProd) {
+                itemSku = matchedProd.sku;
+              }
+            }
+
+            if (!itemSku) {
+              const orderIdNum = order.id ? order.id.split("/").pop() : Math.random().toString(36).substring(7);
+              itemSku = `SKU-ORDER-${orderIdNum}`;
+            }
+
             const priceVal = parseFloat(item.originalUnitPriceSet?.shopMoney?.amount || "0.0");
 
             await prisma.historicalSale.create({
@@ -347,6 +376,7 @@ export async function syncShopifyDataToDb(admin: any, shopDomain: string, forceC
                 salesChannel: "Shopify Store",
               },
             });
+            console.log(`[SYNC DEBUG] Created HistoricalSale row for order ${order.name || order.id}, SKU: ${itemSku}`);
           }
         }
       }
@@ -608,8 +638,20 @@ export async function syncSingleOrderToDb(shopDomain: string, orderPayload: any)
     const date = orderPayload.created_at ? new Date(orderPayload.created_at) : new Date();
 
     for (const item of orderPayload.line_items) {
-      const itemSku = item.sku ? item.sku.trim() : "";
-      if (!itemSku) continue;
+      let itemSku = item.sku ? item.sku.trim() : (item.variant_id ? `SKU-${item.variant_id}` : "");
+
+      if (!itemSku && item.title) {
+        const matchedProd = await prisma.product.findFirst({
+          where: { shopDomain, productName: item.title },
+        });
+        if (matchedProd) {
+          itemSku = matchedProd.sku;
+        }
+      }
+
+      if (!itemSku) {
+        itemSku = `SKU-ORDER-${orderPayload.id || Math.random().toString(36).substring(7)}`;
+      }
 
       const qty = item.quantity || 1;
       const priceVal = parseFloat(item.price || "0.0");

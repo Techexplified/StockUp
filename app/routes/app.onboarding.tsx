@@ -79,6 +79,23 @@ export default function OnboardingRoute() {
     );
   };
 
+  const isStep1Valid = Boolean(
+    role &&
+    role.trim() !== "" &&
+    goals.length > 0 &&
+    priority &&
+    manageSuppliers &&
+    manageSuppliers.trim() !== ""
+  );
+
+  const isStep2Valid = Boolean(
+    leadTime &&
+    safetyStock &&
+    threshold &&
+    planningHorizon &&
+    recStyle
+  );
+
   const isNavigatingFinish = isSubmitting || navigation.state !== "idle";
 
   const handleFinishSetup = () => {
@@ -436,14 +453,29 @@ export default function OnboardingRoute() {
                 {/* PRIMARY ACTION BUTTON */}
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(2)}
-                  className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white py-3.5 px-6 rounded-xl font-semibold text-base transition-colors flex items-center justify-center gap-2 shadow-sm mt-4"
+                  disabled={!isStep1Valid}
+                  onClick={() => {
+                    if (isStep1Valid) setCurrentStep(2);
+                  }}
+                  className={`w-full py-3.5 px-6 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 shadow-sm mt-4 ${
+                    isStep1Valid
+                      ? "bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/80 shadow-none"
+                  }`}
                 >
                   <span>Continue</span>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </button>
+                {!isStep1Valid && (
+                  <p className="text-xs text-amber-600 text-center font-medium mt-2.5 flex items-center justify-center gap-1.5">
+                    <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Please fill all required fields (Role & Supplier management) to continue.</span>
+                  </p>
+                )}
               </div>
             )}
 
@@ -621,11 +653,11 @@ export default function OnboardingRoute() {
                   <button
                     type="button"
                     onClick={handleFinishSetup}
-                    disabled={isNavigatingFinish}
-                    className={`flex-1 text-white py-3.5 px-6 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm ${
-                      isNavigatingFinish
-                        ? "bg-[#9a65f0] cursor-not-allowed opacity-90"
-                        : "bg-[#7c3aed] hover:bg-[#6d28d9]"
+                    disabled={!isStep2Valid || isNavigatingFinish}
+                    className={`flex-1 text-white py-3.5 px-6 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm ${
+                      !isStep2Valid || isNavigatingFinish
+                        ? "bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300 opacity-80"
+                        : "bg-[#7c3aed] hover:bg-[#6d28d9] cursor-pointer"
                     }`}
                   >
                     {isNavigatingFinish ? (

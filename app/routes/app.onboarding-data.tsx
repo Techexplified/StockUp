@@ -855,11 +855,18 @@ const normalizeHeaderName = (headerName: string): string => {
     }
   };
 
+  const isImportMethodSelected = Boolean(
+    storeConnected ||
+    uploadedFiles.length > 0 ||
+    Object.keys(stagedData).length > 0
+  );
+
   const isNavigatingImport =
     isImporting ||
     (navigation.state !== "idle" && navigation.formData?.get("actionType") === "finish_setup");
 
   const handleStartImport = () => {
+    if (!isImportMethodSelected) return;
     setIsImporting(true);
     const formData = new FormData();
     formData.append("actionType", "finish_setup");
@@ -941,11 +948,11 @@ const normalizeHeaderName = (headerName: string): string => {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-sm">
+          {/* <div className="hidden md:flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-sm">
             <Calendar className="w-4 h-4 text-slate-400" />
             <span>18 July - 25 July 2026</span>
             <span className="text-slate-400 ml-1">▼</span>
-          </div>
+          </div> */}
         </div>
 
         {/* MAIN LAYOUT GRID */}
@@ -1262,28 +1269,37 @@ const normalizeHeaderName = (headerName: string): string => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleStartImport}
-            disabled={isNavigatingImport || isSyncing}
-            className={`w-full md:w-auto px-8 py-3.5 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm ${
-              isNavigatingImport
-                ? "bg-violet-400 cursor-not-allowed opacity-90"
-                : "bg-violet-600 hover:bg-violet-700"
-            }`}
-          >
-            {isNavigatingImport ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Importing Data & Setting Up...</span>
-              </>
-            ) : (
-              <>
-                <span>Start Import</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            {!isImportMethodSelected && (
+              <p className="text-xs text-amber-600 font-medium flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Connect your Shopify Store or upload a data file to start import.</span>
+              </p>
             )}
-          </button>
+
+            <button
+              type="button"
+              onClick={handleStartImport}
+              disabled={!isImportMethodSelected || isNavigatingImport || isSyncing}
+              className={`w-full md:w-auto px-8 py-3.5 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm ${
+                !isImportMethodSelected || isNavigatingImport || isSyncing
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/80 shadow-none opacity-80"
+                  : "bg-violet-600 hover:bg-violet-700 cursor-pointer"
+              }`}
+            >
+              {isNavigatingImport ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Importing Data & Setting Up...</span>
+                </>
+              ) : (
+                <>
+                  <span>Start Import</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
       </div>
