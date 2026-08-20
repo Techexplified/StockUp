@@ -75,7 +75,6 @@ export async function ensureShopData(request: Request, authenticate: any) {
           currency: shopData?.currencyCode || "USD",
           country: shopData?.billingAddress?.country || null,
           isOnboarded: false,
-          connectedToShopify: false,
         },
       });
     } catch (error) {
@@ -88,7 +87,6 @@ export async function ensureShopData(request: Request, authenticate: any) {
           email: "",
           currency: "USD",
           isOnboarded: false,
-          connectedToShopify: false,
         },
       });
     }
