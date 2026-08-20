@@ -76,11 +76,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // 2. Filter Active Products
   const activeProducts = products.filter(
-    (p) => (p.status || "Active").toLowerCase() !== "inactive"
+    (p: any) => (p.status || "Active").toLowerCase() !== "inactive"
   );
 
   // 3. Time Windows for Velocity and Period-Over-Period Calculations
-  const maxSaleTime = sales.reduce((max, s) => {
+  const maxSaleTime = sales.reduce((max: number, s: any) => {
     const t = new Date(s.date).getTime();
     return !isNaN(t) && t > max ? t : max;
   }, 0);
@@ -119,7 +119,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const productPerformance: ProductPerformanceItem[] = [];
 
   // 5. SKU-level Calculations
-  activeProducts.forEach((p) => {
+  activeProducts.forEach((p: any) => {
     const currentStock = p.currentStock || 0;
 
     const unitCost = p.unitCost || p.sellingPrice || 0;
@@ -136,7 +136,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const pVariantClean = cleanStr(p.variantName);
     const pFullClean = pNameClean + pVariantClean;
 
-    const skuSales = sales.filter((s) => {
+    const skuSales = sales.filter((s: any) => {
       const sSkuClean = cleanStr(s.sku);
       const sNameClean = cleanStr(s.productName);
       if (sSkuClean && pSkuClean && (sSkuClean === pSkuClean || sSkuClean.includes(pSkuClean) || pSkuClean.includes(sSkuClean))) {
@@ -147,18 +147,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       }
       return false;
     });
-    const sales90Days = skuSales.filter((s) => new Date(s.date) >= ninetyDaysAgo);
-    const sales30Days = skuSales.filter((s) => new Date(s.date) >= thirtyDaysAgo);
+    const sales90Days = skuSales.filter((s: any) => new Date(s.date) >= ninetyDaysAgo);
+    const sales30Days = skuSales.filter((s: any) => new Date(s.date) >= thirtyDaysAgo);
 
-    const netUnitsSold90 = sales90Days.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
-    const netUnitsSold30 = sales30Days.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
-    const revenue30 = sales30Days.reduce((acc, s) => acc + (s.quantitySold || 0) * (s.unitSellingPrice || sellingPrice), 0);
+    const netUnitsSold90 = sales90Days.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+    const netUnitsSold30 = sales30Days.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+    const revenue30 = sales30Days.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) * (s.unitSellingPrice || sellingPrice), 0);
 
-    const totalAllTimeUnits = skuSales.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+    const totalAllTimeUnits = skuSales.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
     const dailySalesVelocity = netUnitsSold30 > 0 ? netUnitsSold30 / 30 : (netUnitsSold90 > 0 ? netUnitsSold90 / 90 : (totalAllTimeUnits > 0 ? totalAllTimeUnits / 90 : 0.02));
     const daysOfStock = dailySalesVelocity > 0 ? currentStock / dailySalesVelocity : 999;
 
-    const suppMap = skuSupplierMaps.find((m) => m.sku === p.sku);
+    const suppMap = skuSupplierMaps.find((m: any) => m.sku === p.sku);
     const leadTime = suppMap?.leadTimeDays || 7;
     const safetyStock = p.safetyStock || 0;
     const calculatedROP = Math.ceil(dailySalesVelocity * leadTime + safetyStock);
@@ -217,13 +217,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const totalActiveSKUs = activeProducts.length;
 
   // 7. Period-Over-Period Trend Computations
-  const sales30Current = sales.filter((s) => new Date(s.date) >= thirtyDaysAgo);
+  const sales30Current = sales.filter((s: any) => new Date(s.date) >= thirtyDaysAgo);
   const sales30Previous = sales.filter(
-    (s) => new Date(s.date) >= sixtyDaysAgo && new Date(s.date) < thirtyDaysAgo
+    (s: any) => new Date(s.date) >= sixtyDaysAgo && new Date(s.date) < thirtyDaysAgo
   );
 
-  const units30Current = sales30Current.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
-  const units30Previous = sales30Previous.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+  const units30Current = sales30Current.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+  const units30Previous = sales30Previous.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
 
   let inventoryTrendPct: number | null = null;
   if (units30Previous > 0) {
@@ -238,7 +238,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const dayOfWeekTotals = [0, 0, 0, 0, 0, 0, 0];
   const dayOfWeekCounts = [0, 0, 0, 0, 0, 0, 0];
 
-  sales.forEach((s) => {
+  sales.forEach((s: any) => {
     const d = new Date(s.date);
     if (!isNaN(d.getTime())) {
       const dayIdx = d.getDay();
@@ -291,13 +291,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const horizonStartDate = new Date(refDate.getTime() - horizonMs);
   const previousHorizonStartDate = new Date(refDate.getTime() - 2 * horizonMs);
 
-  const salesHorizonCurrent = sales.filter((s) => new Date(s.date) >= horizonStartDate);
+  const salesHorizonCurrent = sales.filter((s: any) => new Date(s.date) >= horizonStartDate);
   const salesHorizonPrevious = sales.filter(
-    (s) => new Date(s.date) >= previousHorizonStartDate && new Date(s.date) < horizonStartDate
+    (s: any) => new Date(s.date) >= previousHorizonStartDate && new Date(s.date) < horizonStartDate
   );
 
-  const unitsHorizonCurrent = salesHorizonCurrent.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
-  const unitsHorizonPrevious = salesHorizonPrevious.reduce((acc, s) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+  const unitsHorizonCurrent = salesHorizonCurrent.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
+  const unitsHorizonPrevious = salesHorizonPrevious.reduce((acc: number, s: any) => acc + (s.quantitySold || 0) - (s.returnQuantity || 0), 0);
 
   let forecastVs14Pct: number | null = null;
   if (unitsHorizonPrevious > 0 && totalForecastDemandUnits > 0) {
@@ -317,7 +317,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         ? 90
         : 0;
 
-  const categories = Array.from(new Set(activeProducts.map((p) => p.category || "General")));
+  const categories = Array.from(new Set(activeProducts.map((p: any) => p.category || "General")));
 
   // const rawOpps = await ensureOpportunitiesInDb(shop.shopDomain);
   // const prioWeight: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
@@ -355,7 +355,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     dayOfWeekMultipliers,
     refTime: Date.now(),
     productPerformance,
-    rawSales: sales.map((s) => ({
+    rawSales: sales.map((s: any) => ({
       sku: s.sku,
       date: s.date,
       qty: (s.quantitySold || 0) - (s.returnQuantity || 0),
