@@ -218,7 +218,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin, session, redirect: shopifyRedirect } = await authenticate.admin(request);
+  const { admin, shop, session, redirect: shopifyRedirect } = await ensureShopData(request, authenticate);
   const formData = await request.formData();
 
   const actionType = formData.get("actionType") as string;
@@ -523,9 +523,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const finalConnectedStatus = isConnected || currentShop?.connectedToShopify || false;
 
     // Mark isOnboardedData = true & connectedToShopify in database
-    await prisma.shop.update({
-      where: { shopDomain: session.shop },
-      data: {
+    await prisma.shop.upsert({
+      where: { shopDomain: shop.shopDomain },
+      update: {
+        isOnboardedData: true,
+        connectedToShopify: finalConnectedStatus,
+      },
+      create: {
+        shopDomain: shop.shopDomain,
+        name: shop.name || shop.shopDomain,
+        email: shop.email || "",
+        isOnboarded: true,
         isOnboardedData: true,
         connectedToShopify: finalConnectedStatus,
       },

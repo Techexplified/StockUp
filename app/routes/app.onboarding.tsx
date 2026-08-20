@@ -7,11 +7,21 @@ import RightSideOnboarding from "../components/rightSideOnboarding";
 import RightSideOnboarding2 from "../components/rightSideOnboarding2";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return null;
+  const { shop, redirect: shopifyRedirect } = await ensureShopData(request, authenticate);
+
+  if (shop.isOnboarded && !shop.isOnboardedData) {
+    return shopifyRedirect("/app/onboarding-data");
+  }
+
+  if (shop.isOnboarded && shop.isOnboardedData) {
+    return shopifyRedirect("/app");
+  }
+
+  return { shop };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { session, redirect: shopifyRedirect } = await authenticate.admin(request);
+  const { shop, redirect: shopifyRedirect } = await ensureShopData(request, authenticate);
   const formData = await request.formData();
 
   const role = formData.get("role") as string;
@@ -24,9 +34,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const planningHorizon = formData.get("planningHorizon") as string;
   const recStyle = formData.get("recStyle") as string;
 
-  const updatedShop = await prisma.shop.update({
-    where: { shopDomain: session.shop },
-    data: {
+  const updatedShop = await prisma.shop.upsert({
+    where: { shopDomain: shop.shopDomain },
+    update: {
       role: role || null,
       goals: goals || null,
       priority: priority || null,
@@ -38,9 +48,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       recStyle: recStyle || null,
       isOnboarded: true,
     },
+    create: {
+      shopDomain: shop.shopDomain,
+      name: shop.name || shop.shopDomain,
+      email: shop.email || "",
+      role: role || null,
+      goals: goals || null,
+      priority: priority || null,
+      manageSuppliers: manageSuppliers || null,
+      leadTime: leadTime || null,
+      safetyStock: safetyStock || null,
+      threshold: threshold || null,
+      planningHorizon: planningHorizon || null,
+      recStyle: recStyle || null,
+      isOnboarded: true,
+      isOnboardedData: false,
+      connectedToShopify: false,
+    },
   });
 
-  // If user has not completed step 3 data import onboarding, redirect immediately to step 3 (/app/onboarding/data)
+  // If user has not completed step 3 data import onboarding, redirect immediately to step 3 (/app/onboarding-data)
   if (!updatedShop.isOnboardedData) {
     return shopifyRedirect("/app/onboarding-data");
   }
