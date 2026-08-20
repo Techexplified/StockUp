@@ -5,7 +5,7 @@ import { authenticate } from "../shopify.server";
 import { ensureShopData } from "../db.server";
 import prisma from "../db.server";
 import { InventoryHealthChart } from "../components/InventoryHealthChart";
-import { ensureOpportunitiesInDb } from "../services/opportunity.server";
+// import { ensureOpportunitiesInDb } from "../services/opportunity.server";
 import {
   ShoppingBag,
   Package,
@@ -319,15 +319,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const categories = Array.from(new Set(activeProducts.map((p) => p.category || "General")));
 
-  const rawOpps = await ensureOpportunitiesInDb(shop.shopDomain);
-  const prioWeight: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
-  const sortedOpps = [...rawOpps].sort((a, b) => {
-    const pA = prioWeight[a.priority] || 0;
-    const pB = prioWeight[b.priority] || 0;
-    if (pA !== pB) return pB - pA;
-    return (b.potentialRevenue || 0) - (a.potentialRevenue || 0);
-  });
-  const topOpportunities = sortedOpps.slice(0, 4);
+  // const rawOpps = await ensureOpportunitiesInDb(shop.shopDomain);
+  // const prioWeight: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
+  // const sortedOpps = [...rawOpps].sort((a, b) => {
+  //   const pA = prioWeight[a.priority] || 0;
+  //   const pB = prioWeight[b.priority] || 0;
+  //   if (pA !== pB) return pB - pA;
+  //   return (b.potentialRevenue || 0) - (a.potentialRevenue || 0);
+  // });
+  // const topOpportunities = sortedOpps.slice(0, 4);
 
   return {
     shop,
@@ -355,7 +355,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     dayOfWeekMultipliers,
     refTime: Date.now(),
     productPerformance,
-    topOpportunities,
     rawSales: sales.map((s) => ({
       sku: s.sku,
       date: s.date,
@@ -787,99 +786,89 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Top Opportunities (4/12) */}
+        {/* Top Priorities (4/12) */}
         <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-2xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
-                  Top Opportunities
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">High-impact AI recommendations</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate("/app/opportunity")}
-                className="text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <span>View all</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              <h3 className="text-sm font-semibold text-slate-900">Top Priorities</h3>
             </div>
 
             <div className="space-y-3">
-              {topOpportunities.length === 0 ? (
-                <div className="p-6 text-center bg-slate-50 border border-slate-100 rounded-xl space-y-2">
-                  <Sparkles className="w-6 h-6 text-slate-300 mx-auto" />
-                  <p className="text-xs text-slate-500 font-medium">No active opportunities right now.</p>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/app/opportunity")}
-                    className="text-xs font-bold text-purple-600 hover:underline"
-                  >
-                    Check Opportunities Feed →
-                  </button>
+              {/* Priority 1: Out of Stock */}
+              <button
+                type="button"
+                onClick={() => navigate("/app/inventory")}
+                className="w-full text-left p-3.5 rounded-xl bg-rose-50/50 hover:bg-rose-50 border border-rose-100 flex items-center justify-between gap-3 group transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                    <XCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900">
+                      {metrics.outOfStockCount} items out of stock
+                    </h4>
+                    <p className="text-[11px] font-normal text-slate-500">Restock to avoid lost sales</p>
+                  </div>
                 </div>
-              ) : (
-                topOpportunities.map((opp: any) => (
-                  <button
-                    key={opp.id}
-                    type="button"
-                    onClick={() => navigate(`/app/opportunity?id=${opp.id}`)}
-                    className="w-full text-left p-3.5 rounded-xl bg-slate-50/70 hover:bg-slate-100/80 border border-slate-200/60 flex items-center justify-between gap-3 group transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center shrink-0 ${
-                        opp.category === "Bundling"
-                          ? "bg-emerald-100 text-emerald-600"
-                          : opp.category === "Marketing"
-                          ? "bg-orange-100 text-orange-600"
-                          : opp.category === "Pricing"
-                          ? "bg-purple-100 text-purple-600"
-                          : "bg-amber-100 text-amber-600"
-                      }`}>
-                        {opp.category === "Bundling" ? (
-                          <Package className="w-4 h-4" />
-                        ) : opp.category === "Marketing" ? (
-                          <Megaphone className="w-4 h-4" />
-                        ) : opp.category === "Pricing" ? (
-                          <Tag className="w-4 h-4" />
-                        ) : (
-                          <Box className="w-4 h-4" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-purple-700 transition">
-                            {opp.title}
-                          </h4>
-                        </div>
-                        <p className="text-[11px] font-medium text-slate-500 truncate mt-0.5">
-                          {opp.productName} · <span className="font-semibold text-slate-700">{opp.category}</span>
-                        </p>
-                      </div>
-                    </div>
+              </button>
 
-                    <div className="text-right shrink-0">
-                      {opp.potentialRevenue > 0 && (
-                        <span className="text-[11px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full block">
-                          +{formatCurrency(opp.potentialRevenue, shop?.currency)}
-                        </span>
-                      )}
-                      <span className={`text-[10px] font-bold mt-1 inline-block px-1.5 py-0.2 rounded-md ${
-                        opp.priority === "High"
-                          ? "bg-red-100 text-red-700"
-                          : opp.priority === "Medium"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-slate-100 text-slate-600"
-                      }`}>
-                        {opp.priority}
-                      </span>
-                    </div>
-                  </button>
-                ))
-              )}
+              {/* Priority 2: Low Stock */}
+              <button
+                type="button"
+                onClick={() => navigate("/app/reorder")}
+                className="w-full text-left p-3.5 rounded-xl bg-amber-50/50 hover:bg-amber-50 border border-amber-100 flex items-center justify-between gap-3 group transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900">
+                      {metrics.lowStockCount} low stock items
+                    </h4>
+                    <p className="text-[11px] font-normal text-slate-500">Reorder soon to stay in stock</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Priority 3: Slow Moving */}
+              <button
+                type="button"
+                onClick={() => navigate("/app/insights")}
+                className="w-full text-left p-3.5 rounded-xl bg-blue-50/50 hover:bg-blue-50 border border-blue-100 flex items-center justify-between gap-3 group transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900">
+                      {metrics.slowDeadCount} slow moving items
+                    </h4>
+                    <p className="text-[11px] font-normal text-slate-500">Review and take action</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Priority 4: At Risk */}
+              <button
+                type="button"
+                onClick={() => navigate("/app/reorder")}
+                className="w-full text-left p-3.5 rounded-xl bg-purple-50/50 hover:bg-purple-50 border border-purple-100 flex items-center justify-between gap-3 group transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900">
+                      {metrics.atRisk7DaysCount} items at risk of stock out
+                    </h4>
+                    <p className="text-[11px] font-normal text-slate-500">Stock may run out in 7 days</p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
